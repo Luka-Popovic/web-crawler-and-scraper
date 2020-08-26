@@ -1,0 +1,169 @@
+//Album i zanrovi
+SELECT G.name, COUNT(*)
+FROM albumgenre AG, genre G
+where AG.idGenre=G.idGenre
+GROUP BY(AG.idGenre)
+ORDER BY G.name;
+
+//Album i stilovi
+SELECT S.name, COUNT(*)
+FROM albumstyle AG, style S
+where AG.idStyle=S.idStyle
+GROUP BY(AG.idStyle)
+ORDER BY S.name;
+
+//Albumi i verzije top 10
+SELECT *
+FROM Album
+ORDER BY versions DESC
+LIMIT 10; ---------------
+
+//Osobe i krediti top 50
+SELECT name, credits
+FROM artist
+ORDER BY credits DESC
+LIMIT 50;
+
+//Osobe i VOCALS top 50
+SELECT name, vocals
+FROM artist
+ORDER BY vocals DESC
+LIMIT 50;
+
+//Osobe i WRITING top 50
+SELECT name, writing
+FROM artist
+ORDER BY writing DESC
+LIMIT 50;
+
+
+//top 100 pesama
+DROP VIEW BASIC_VIEW;
+
+CREATE VIEW BASIC_VIEW(Song, Artist, SongCount)
+AS
+
+    SELECT So.name, Art.idArtist, COUNT(*) AS br
+    FROM songartalbum AS SAA, song AS So, artist AS Art 
+    WHERE SAA.idSong=So.idSong AND SAA.idArtist=Art.idArtist
+    GROUP BY So.name, Art.idArtist
+    ORDER BY br DESC;
+    
+create view ALBUM_VIEW(Song, Artist, Album, AlbumName, Country, Year)
+AS
+
+SELECT BV.Song, BV.Artist, Alb.idAlbum, Alb.name, Alb.country, Alb.yearReleased
+FROM album as Alb, songartalbum as SAA, song as So, basic_view as BV
+WHERE So.name=BV.Song AND  So.idSong = SAA.idSong AND BV.Artist=SAA.idArtist AND SAA.idAlbum=Alb.idAlbum;
+
+////DEKADE
+SELECT (CASE 
+		WHEN yearReleased<1960 THEN 0
+        	WHEN yearReleased<1970 THEN 1
+        	WHEN yearReleased<1980 THEN 2
+        	WHEN yearReleased<1990 THEN 3
+        	WHEN yearReleased<2000 THEN 4
+       		WHEN yearReleased<2010 THEN 5
+        	WHEN yearReleased<2018 THEN 6
+       END) AS Decade, COUNT(*)
+FROM album
+GROUP BY Decade
+ORDER BY Decade ASC;
+
+/////Najzastupljeniji zanrovi - TOP 6
+SELECT G.name, COUNT(*)
+FROM genre G, albumgenre AG
+WHERE G.idGenre=AG.idGenre
+GROUP BY G.idGenre
+LIMIT 6;
+
+////Duzina pesama
+SELECT (CASE 
+		WHEN length<90 THEN "1:90-"
+        	WHEN length<=180 THEN "2:91-181"
+        	WHEN length<=240 THEN "3:181-240"
+        	WHEN length<=300 THEN "4:241-300"
+        	WHEN length<=360 THEN "5:301-360"
+        	WHEN length>360 THEN "6:361+"
+       END) AS SongLength, COUNT(*)
+FROM song
+GROUP BY SongLength
+ORDER BY SongLength ASC;
+
+///////CIRILICA - LATINICA
+DROP VIEW TOTAL;
+
+CREATE VIEW TOTAL(Cnt)
+AS
+
+SELECT COUNT(*)
+FROM album;
+
+DROP VIEW ALPHA;
+
+CREATE VIEW ALPHA(Type, TypeCount)
+AS
+
+SELECT (CASE 
+		WHEN ALB.alphabet='C' THEN "CYRILLIC"
+        ELSE "LATIN"
+       END), COUNT(*)
+FROM album AS ALB 
+GROUP BY ALB.alphabet;
+
+SELECT AL.Type, AL.TypeCount, AL.TypeCount/TOT.CNT
+FROM alpha AS AL, total AS TOT;
+
+/////Zanrovi
+DROP VIEW TOTAL;
+
+CREATE VIEW TOTAL(Cnt)
+AS
+
+SELECT COUNT(*)
+FROM album;
+
+DROP VIEW ViewGenre;
+
+CREATE VIEW ViewGenre
+AS
+
+SELECT COUNT(*) as genNum
+FROM albumgenre
+GROUP BY idAlbum;
+
+DROP VIEW VG1;
+
+CREATE VIEW VG1
+AS
+
+SELECT COUNT(*) AS VAL1 
+FROM ViewGenre as VG
+WHERE VG.genNum = 1;
+
+DROP VIEW VG2;
+CREATE VIEW VG2
+AS
+
+SELECT COUNT(*) AS VAL2 
+FROM ViewGenre as VG
+WHERE VG.genNum = 2;
+
+DROP VIEW VG3;
+CREATE VIEW VG3
+AS
+
+SELECT COUNT(*) AS VAL3 
+FROM ViewGenre as VG
+WHERE VG.genNum = 3;
+
+DROP VIEW VGG4;
+CREATE VIEW VGG4
+AS
+
+SELECT COUNT(*) AS VAL4 
+FROM ViewGenre as VG
+WHERE VG.genNum > 3;
+
+SELECT G1.VAL1, G1.VAL1/Tot.Cnt,G2.VAL2, G2.VAL2/Tot.Cnt,G3.VAL3, G3.VAL3/Tot.Cnt,G4.VAL4, G4.VAL4/Tot.Cnt
+FROM VG1 AS G1, VG2 AS G2, VG3 AS G3, VGG4 AS G4, total as Tot;
